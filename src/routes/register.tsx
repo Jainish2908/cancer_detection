@@ -3,7 +3,10 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthLayout } from "@/components/layout/AuthCard";
-import { PasswordField, PasswordStrength } from "@/components/auth/PasswordField";
+import {
+  PasswordField,
+  PasswordStrength,
+} from "@/components/auth/PasswordField";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,7 +16,11 @@ export const Route = createFileRoute("/register")({
   head: () => ({
     meta: [
       { title: "Register — BreastCare AI" },
-      { name: "description", content: "Create your account on BreastCare AI to access research analysis tools." },
+      {
+        name: "description",
+        content:
+          "Create your account on BreastCare AI to access research analysis tools.",
+      },
     ],
   }),
   component: RegisterPage,
@@ -59,17 +66,31 @@ function RegisterPage() {
       });
 
       if (error) {
-        toast.error(error.message || "Registration failed. Please check your credentials.");
+        toast.error(
+          error.message ||
+            "Registration failed. Please check your credentials.",
+        );
         setLoading(false);
         return;
       }
 
-      if (data.user) {
-        toast.success("Account created successfully! Welcome to BreastCare AI.");
+      if (data.user && !data.session) {
+        toast.success(
+          "Account created. Please check your email to confirm your account before logging in.",
+        );
+        navigate({ to: "/login" });
+      } else if (data.session) {
+        toast.success(
+          "Account created successfully! Welcome to BreastCare AI.",
+        );
         navigate({ to: "/assessment" });
       }
-    } catch (err: any) {
-      toast.error(err.message || "An unexpected error occurred during registration.");
+    } catch (err: unknown) {
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "An unexpected error occurred during registration.",
+      );
     } finally {
       setLoading(false);
     }
@@ -82,7 +103,10 @@ function RegisterPage() {
       footer={
         <p className="text-center text-sm text-muted-foreground">
           Already have an account?{" "}
-          <Link to="/login" className="font-medium text-primary hover:underline">
+          <Link
+            to="/login"
+            className="font-medium text-primary hover:underline"
+          >
             Log in
           </Link>
         </p>
@@ -168,7 +192,8 @@ function RegisterPage() {
         <Button type="submit" className="w-full" size="lg" disabled={loading}>
           {loading ? (
             <>
-              <Loader2 className="mr-2 size-4 animate-spin" /> Creating Account...
+              <Loader2 className="mr-2 size-4 animate-spin" /> Creating
+              Account...
             </>
           ) : (
             "Register Account"

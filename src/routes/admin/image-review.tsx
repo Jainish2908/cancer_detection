@@ -45,7 +45,7 @@ type ImageRecord = {
   created_at: string;
   reviewed_at: string | null;
   reviewed_by: string | null;
-  signedUrl?: string;
+  signedUrl?: string | undefined;
 };
 
 function AdminImageReviewPage() {
@@ -78,14 +78,14 @@ function AdminImageReviewPage() {
 
           return {
             ...item,
-            signedUrl: signed?.signedUrl || undefined,
+            ...(signed?.signedUrl ? { signedUrl: signed.signedUrl } : {}),
           };
         }),
       );
 
       setRecords(itemsWithUrls);
       if (itemsWithUrls.length > 0 && !selectedRecord) {
-        setSelectedRecord(itemsWithUrls[0]);
+        setSelectedRecord(itemsWithUrls[0] ?? null);
       }
     } catch (err: any) {
       toast.error("Failed to load image review queue.");

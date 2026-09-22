@@ -27,11 +27,11 @@ export function SiteFooter() {
         </div>
         <div className="space-y-2 text-sm">
           <h2 className="font-display text-sm font-semibold">Access</h2>
-          <Link to="/admin/login" className="block text-muted-foreground hover:text-foreground">
+          <Link to="/login" className="block text-muted-foreground hover:text-foreground">
             Administrator login
           </Link>
-          <Link to="/forgot-password" className="block text-muted-foreground hover:text-foreground">
-            Forgot password
+          <Link to="/register" className="block text-muted-foreground hover:text-foreground">
+            Create account
           </Link>
         </div>
       </div>

@@ -508,7 +508,7 @@ function DiagnosticAnalysisPage() {
                             }}
                           />
                           <Bar dataKey="contribution" radius={[4, 4, 0, 0]}>
-                            {(result.models[0]?.feature_contributions || []).map((entry, index) => (
+                            {(result.models[0]?.feature_contributions ?? []).map((entry, index) => (
                               <Cell
                                 key={`cell-${index}`}
                                 fill={entry.contribution > 0 ? "#e11d48" : "#2563eb"}

@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Link,
+  useNavigate,
+  useSearch,
+} from "@tanstack/react-router";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthLayout } from "@/components/layout/AuthCard";
@@ -16,7 +21,10 @@ export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
       { title: "Login — BreastCare AI" },
-      { name: "description", content: "Sign in to your BreastCare AI patient or researcher account." },
+      {
+        name: "description",
+        content: "Sign in to your BreastCare AI patient or researcher account.",
+      },
     ],
   }),
   component: LoginPage,
@@ -46,18 +54,53 @@ function LoginPage() {
       });
 
       if (error) {
-        toast.error(error.message || "Invalid login credentials. Please try again.");
+        const emailNotConfirmed =
+          error.code === "email_not_confirmed" ||
+          error.message.toLowerCase().includes("email not confirmed");
+
+        if (emailNotConfirmed) {
+          toast.error("Please confirm your email before logging in.", {
+            action: {
+              label: "Resend email",
+              onClick: async () => {
+                const { error: resendError } = await supabase.auth.resend({
+                  type: "signup",
+                  email: email.trim(),
+                });
+
+                if (resendError) {
+                  toast.error(
+                    resendError.message ||
+                      "Unable to resend the confirmation email.",
+                  );
+                } else {
+                  toast.success(
+                    "Confirmation email sent. Please check your inbox.",
+                  );
+                }
+              },
+            },
+          });
+        } else {
+          toast.error(
+            error.message || "Invalid login credentials. Please try again.",
+          );
+        }
         setLoading(false);
         return;
       }
 
       if (data.session) {
         toast.success("Successfully logged in.");
-        const targetPath = search.redirect || "/dashboard";
-        navigate({ to: targetPath as any });
+        const targetPath = search["redirect"] || "/dashboard";
+        navigate({ to: targetPath as never });
       }
-    } catch (err: any) {
-      toast.error(err.message || "An unexpected error occurred during login.");
+    } catch (err: unknown) {
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "An unexpected error occurred during login.",
+      );
     } finally {
       setLoading(false);
     }
@@ -70,7 +113,10 @@ function LoginPage() {
       footer={
         <p className="text-center text-sm text-muted-foreground">
           Don't have an account?{" "}
-          <Link to="/register" className="font-medium text-primary hover:underline">
+          <Link
+            to="/register"
+            className="font-medium text-primary hover:underline"
+          >
             Register now
           </Link>
         </p>

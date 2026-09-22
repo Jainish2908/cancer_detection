@@ -50,7 +50,7 @@ type ImageRecord = {
   status: string;
   created_at: string;
   reviewed_at: string | null;
-  signedUrl?: string;
+  signedUrl?: string | undefined;
 };
 
 function ImageAnalysisPage() {
@@ -84,7 +84,7 @@ function ImageAnalysisPage() {
 
           return {
             ...rec,
-            signedUrl: signedData?.signedUrl || undefined,
+            ...(signedData?.signedUrl ? { signedUrl: signedData.signedUrl } : {}),
           };
         }),
       );
