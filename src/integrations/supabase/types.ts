@@ -44,6 +44,63 @@ export type Database = {
         }
         Relationships: []
       }
+      diagnostic_results: {
+        Row: {
+          created_at: string
+          id: string
+          input_features: Json
+          model_outputs: Json
+          patient_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          input_features?: Json
+          model_outputs?: Json
+          patient_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          input_features?: Json
+          model_outputs?: Json
+          patient_id?: string
+        }
+        Relationships: []
+      }
+      medical_image_analyses: {
+        Row: {
+          analysis_notes: string | null
+          created_at: string
+          file_name: string
+          file_path: string
+          file_size: number
+          id: string
+          patient_id: string
+          status: string
+        }
+        Insert: {
+          analysis_notes?: string | null
+          created_at?: string
+          file_name: string
+          file_path: string
+          file_size: number
+          id?: string
+          patient_id: string
+          status?: string
+        }
+        Update: {
+          analysis_notes?: string | null
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number
+          id?: string
+          patient_id?: string
+          status?: string
+        }
+        Relationships: []
+      }
       patient_assessments: {
         Row: {
           address: string | null

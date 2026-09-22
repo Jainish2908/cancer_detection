@@ -10,11 +10,34 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AssessmentRouteImport } from './routes/assessment'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as DiagnosticAnalysisRouteImport } from './routes/diagnostic-analysis'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
+import { Route as ImageAnalysisRouteImport } from './routes/image-analysis'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
+import { Route as PatientDashboardRouteImport } from './routes/patient/dashboard'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AssessmentRoute = AssessmentRouteImport.update({
+  id: '/assessment',
+  path: '/assessment',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DiagnosticAnalysisRoute = DiagnosticAnalysisRouteImport.update({
+  id: '/diagnostic-analysis',
+  path: '/diagnostic-analysis',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HowItWorksRoute = HowItWorksRouteImport.update({
@@ -22,31 +45,119 @@ const HowItWorksRoute = HowItWorksRouteImport.update({
   path: '/how-it-works',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ImageAnalysisRoute = ImageAnalysisRouteImport.update({
+  id: '/image-analysis',
+  path: '/image-analysis',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminDashboardRoute = AdminDashboardRouteImport.update({
+  id: '/admin/dashboard',
+  path: '/admin/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PatientDashboardRoute = PatientDashboardRouteImport.update({
+  id: '/patient/dashboard',
+  path: '/patient/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/assessment': typeof AssessmentRoute
+  '/dashboard': typeof DashboardRoute
+  '/diagnostic-analysis': typeof DiagnosticAnalysisRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/image-analysis': typeof ImageAnalysisRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/patient/dashboard': typeof PatientDashboardRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/assessment': typeof AssessmentRoute
+  '/dashboard': typeof DashboardRoute
+  '/diagnostic-analysis': typeof DiagnosticAnalysisRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/image-analysis': typeof ImageAnalysisRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/patient/dashboard': typeof PatientDashboardRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/assessment': typeof AssessmentRoute
+  '/dashboard': typeof DashboardRoute
+  '/diagnostic-analysis': typeof DiagnosticAnalysisRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/image-analysis': typeof ImageAnalysisRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/patient/dashboard': typeof PatientDashboardRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/how-it-works'
+  fullPaths:
+    | '/'
+    | '/assessment'
+    | '/dashboard'
+    | '/diagnostic-analysis'
+    | '/how-it-works'
+    | '/image-analysis'
+    | '/login'
+    | '/register'
+    | '/admin/dashboard'
+    | '/patient/dashboard'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/how-it-works'
-  id: '__root__' | '/' | '/how-it-works'
+  to:
+    | '/'
+    | '/assessment'
+    | '/dashboard'
+    | '/diagnostic-analysis'
+    | '/how-it-works'
+    | '/image-analysis'
+    | '/login'
+    | '/register'
+    | '/admin/dashboard'
+    | '/patient/dashboard'
+  id:
+    | '__root__'
+    | '/'
+    | '/assessment'
+    | '/dashboard'
+    | '/diagnostic-analysis'
+    | '/how-it-works'
+    | '/image-analysis'
+    | '/login'
+    | '/register'
+    | '/admin/dashboard'
+    | '/patient/dashboard'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AssessmentRoute: typeof AssessmentRoute
+  DashboardRoute: typeof DashboardRoute
+  DiagnosticAnalysisRoute: typeof DiagnosticAnalysisRoute
   HowItWorksRoute: typeof HowItWorksRoute
+  ImageAnalysisRoute: typeof ImageAnalysisRoute
+  LoginRoute: typeof LoginRoute
+  RegisterRoute: typeof RegisterRoute
+  AdminDashboardRoute: typeof AdminDashboardRoute
+  PatientDashboardRoute: typeof PatientDashboardRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -58,6 +169,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/assessment': {
+      id: '/assessment'
+      path: '/assessment'
+      fullPath: '/assessment'
+      preLoaderRoute: typeof AssessmentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/diagnostic-analysis': {
+      id: '/diagnostic-analysis'
+      path: '/diagnostic-analysis'
+      fullPath: '/diagnostic-analysis'
+      preLoaderRoute: typeof DiagnosticAnalysisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/how-it-works': {
       id: '/how-it-works'
       path: '/how-it-works'
@@ -65,12 +197,55 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HowItWorksRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/image-analysis': {
+      id: '/image-analysis'
+      path: '/image-analysis'
+      fullPath: '/image-analysis'
+      preLoaderRoute: typeof ImageAnalysisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/dashboard': {
+      id: '/admin/dashboard'
+      path: '/admin/dashboard'
+      fullPath: '/admin/dashboard'
+      preLoaderRoute: typeof AdminDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/patient/dashboard': {
+      id: '/patient/dashboard'
+      path: '/patient/dashboard'
+      fullPath: '/patient/dashboard'
+      preLoaderRoute: typeof PatientDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AssessmentRoute: AssessmentRoute,
+  DashboardRoute: DashboardRoute,
+  DiagnosticAnalysisRoute: DiagnosticAnalysisRoute,
   HowItWorksRoute: HowItWorksRoute,
+  ImageAnalysisRoute: ImageAnalysisRoute,
+  LoginRoute: LoginRoute,
+  RegisterRoute: RegisterRoute,
+  AdminDashboardRoute: AdminDashboardRoute,
+  PatientDashboardRoute: PatientDashboardRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
