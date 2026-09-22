@@ -1,0 +1,1 @@
+import{a as e}from"./client-C5yE1iU5.js";import{t}from"./AuthGuard-B3kgJAJy.js";import{l as n,s as r}from"./index-DV4lY1lw.js";var i=e();function a(){let{isAdmin:e}=r();return(0,i.jsx)(t,{children:e?(0,i.jsx)(n,{to:`/admin/dashboard`,replace:!0}):(0,i.jsx)(n,{to:`/patient/dashboard`,replace:!0})})}export{a as component};

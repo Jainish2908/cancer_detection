@@ -71,32 +71,41 @@ export type Database = {
       medical_image_analyses: {
         Row: {
           analysis_notes: string | null
+          analysis_result: string | null
           created_at: string
           file_name: string
           file_path: string
           file_size: number
           id: string
           patient_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
           status: string
         }
         Insert: {
           analysis_notes?: string | null
+          analysis_result?: string | null
           created_at?: string
           file_name: string
           file_path: string
           file_size: number
           id?: string
           patient_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           status?: string
         }
         Update: {
           analysis_notes?: string | null
+          analysis_result?: string | null
           created_at?: string
           file_name?: string
           file_path?: string
           file_size?: number
           id?: string
           patient_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           status?: string
         }
         Relationships: []

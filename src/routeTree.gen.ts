@@ -18,6 +18,7 @@ import { Route as ImageAnalysisRouteImport } from './routes/image-analysis'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
+import { Route as AdminImageReviewRouteImport } from './routes/admin/image-review'
 import { Route as PatientDashboardRouteImport } from './routes/patient/dashboard'
 
 const IndexRoute = IndexRouteImport.update({
@@ -65,6 +66,11 @@ const AdminDashboardRoute = AdminDashboardRouteImport.update({
   path: '/admin/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminImageReviewRoute = AdminImageReviewRouteImport.update({
+  id: '/admin/image-review',
+  path: '/admin/image-review',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PatientDashboardRoute = PatientDashboardRouteImport.update({
   id: '/patient/dashboard',
   path: '/patient/dashboard',
@@ -81,6 +87,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/image-review': typeof AdminImageReviewRoute
   '/patient/dashboard': typeof PatientDashboardRoute
 }
 export interface FileRoutesByTo {
@@ -93,6 +100,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/image-review': typeof AdminImageReviewRoute
   '/patient/dashboard': typeof PatientDashboardRoute
 }
 export interface FileRoutesById {
@@ -106,6 +114,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/image-review': typeof AdminImageReviewRoute
   '/patient/dashboard': typeof PatientDashboardRoute
 }
 export interface FileRouteTypes {
@@ -120,6 +129,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/admin/dashboard'
+    | '/admin/image-review'
     | '/patient/dashboard'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -132,6 +142,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/admin/dashboard'
+    | '/admin/image-review'
     | '/patient/dashboard'
   id:
     | '__root__'
@@ -144,6 +155,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/admin/dashboard'
+    | '/admin/image-review'
     | '/patient/dashboard'
   fileRoutesById: FileRoutesById
 }
@@ -157,6 +169,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
   AdminDashboardRoute: typeof AdminDashboardRoute
+  AdminImageReviewRoute: typeof AdminImageReviewRoute
   PatientDashboardRoute: typeof PatientDashboardRoute
 }
 
@@ -225,6 +238,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminDashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/image-review': {
+      id: '/admin/image-review'
+      path: '/admin/image-review'
+      fullPath: '/admin/image-review'
+      preLoaderRoute: typeof AdminImageReviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/patient/dashboard': {
       id: '/patient/dashboard'
       path: '/patient/dashboard'
@@ -245,6 +265,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
   AdminDashboardRoute: AdminDashboardRoute,
+  AdminImageReviewRoute: AdminImageReviewRoute,
   PatientDashboardRoute: PatientDashboardRoute,
 }
 export const routeTree = rootRouteImport

@@ -11,6 +11,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import {
   FileImage,
@@ -21,13 +23,17 @@ import {
   Eye,
   ShieldCheck,
   FileText,
+  UserCheck,
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
 } from "lucide-react";
 
 export const Route = createFileRoute("/image-analysis")({
   head: () => ({
     meta: [
       { title: "Image Analysis — BreastCare AI" },
-      { name: "description", content: "Protected medical image upload and private storage management." },
+      { name: "description", content: "Protected medical image upload and clinician-review workflow." },
     ],
   }),
   component: ImageAnalysisPage,
@@ -40,8 +46,10 @@ type ImageRecord = {
   file_name: string;
   file_size: number;
   analysis_notes: string | null;
+  analysis_result: string | null;
   status: string;
   created_at: string;
+  reviewed_at: string | null;
   signedUrl?: string;
 };
 
@@ -67,12 +75,12 @@ function ImageAnalysisPage() {
 
       const records: ImageRecord[] = (data as ImageRecord[]) || [];
 
-      // Generate signed URLs for private images
+      // Generate signed URLs for private images (5 min expiry)
       const recordsWithUrls = await Promise.all(
         records.map(async (rec) => {
           const { data: signedData } = await supabase.storage
             .from("medical-images")
-            .createSignedUrl(rec.file_path, 3600);
+            .createSignedUrl(rec.file_path, 300);
 
           return {
             ...rec,
@@ -113,7 +121,7 @@ function ImageAnalysisPage() {
       const sanitizedFileName = selectedFile.name.replace(/[^a-zA-Z0-9.-]/g, "_");
       const filePath = `${user.id}/${Date.now()}_${sanitizedFileName}`;
 
-      // 1. Upload to Supabase Storage bucket 'medical-images'
+      // 1. Upload to private Supabase Storage bucket 'medical-images'
       const { error: uploadErr } = await supabase.storage
         .from("medical-images")
         .upload(filePath, selectedFile, {
@@ -121,9 +129,7 @@ function ImageAnalysisPage() {
           upsert: false,
         });
 
-      if (uploadErr) {
-        throw new Error(uploadErr.message || "Failed to upload file to storage.");
-      }
+      if (uploadErr) throw uploadErr;
 
       // 2. Insert record into medical_image_analyses DB table
       const { error: dbErr } = await supabase.from("medical_image_analyses").insert({
@@ -132,12 +138,10 @@ function ImageAnalysisPage() {
         file_name: selectedFile.name,
         file_size: selectedFile.size,
         analysis_notes: notes.trim() || null,
-        status: "uploaded",
+        status: "pending",
       });
 
-      if (dbErr) {
-        throw new Error(dbErr.message || "Failed to create database record.");
-      }
+      if (dbErr) throw dbErr;
 
       // 3. Create Audit Log
       await supabase.from("audit_logs").insert({
@@ -152,7 +156,7 @@ function ImageAnalysisPage() {
         },
       });
 
-      toast.success("Medical image securely uploaded!");
+      toast.success("Medical scan uploaded for clinician review!");
       setSelectedFile(null);
       setNotes("");
       await loadImages();
@@ -167,13 +171,9 @@ function ImageAnalysisPage() {
     if (!confirm(`Are you sure you want to delete ${rec.file_name}?`)) return;
 
     try {
-      // Delete from storage
       await supabase.storage.from("medical-images").remove([rec.file_path]);
-
-      // Delete DB record
       await supabase.from("medical_image_analyses").delete().eq("id", rec.id);
 
-      // Audit Log
       await supabase.from("audit_logs").insert({
         user_id: user?.id || null,
         action: "image_deleted",
@@ -206,24 +206,37 @@ function ImageAnalysisPage() {
               <div>
                 <div className="flex items-center gap-2">
                   <FileImage className="size-6 text-primary" />
-                  <h1 className="font-display text-2xl font-bold md:text-3xl">Protected Image Analysis</h1>
+                  <h1 className="font-display text-2xl font-bold md:text-3xl">Clinician Image Review & Upload</h1>
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Securely upload and store mammography or ultrasound medical images with patient-controlled RLS encryption.
+                  Human clinician review workflow. Uploaded mammography and ultrasound scans are held in private patient-encrypted storage.
                 </p>
               </div>
 
               <Badge variant="outline" className="w-fit gap-1 text-xs">
-                <Lock className="size-3 text-primary" /> Private Bucket: medical-images
+                <UserCheck className="size-3 text-primary" /> Human Clinician Oversight
               </Badge>
             </div>
 
-            {/* Upload Card */}
+            {/* Workflow Disclaimer Banner */}
+            <Card className="border-primary/20 bg-primary/5">
+              <CardContent className="flex items-start gap-3 p-4 text-xs text-foreground">
+                <ShieldCheck className="size-5 shrink-0 text-primary mt-0.5" />
+                <div>
+                  <h4 className="font-semibold text-sm">Human Clinician Review Workflow</h4>
+                  <p className="mt-0.5 text-muted-foreground">
+                    Medical image analysis on BreastCare AI is conducted by qualified healthcare research clinicians, not by automated black-box AI software. Your uploaded scans are encrypted and reviewed manually by trained professionals.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Upload Form Card */}
             <Card className="shadow-[var(--shadow-card)]">
               <CardHeader>
                 <CardTitle className="text-lg">Upload Medical Image Scan</CardTitle>
                 <CardDescription>
-                  Select a DICOM, PNG, JPEG, or WebP scan file to store in your private folder.
+                  Select a mammography, ultrasound, or fine-needle scan to submit for clinician review.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -258,24 +271,24 @@ function ImageAnalysisPage() {
                   )}
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="notes" className="text-xs">Optional Clinical / Research Notes</Label>
+                    <Label htmlFor="notes" className="text-xs">Optional Clinical Context / Radiologist Notes</Label>
                     <Textarea
                       id="notes"
                       rows={2}
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
-                      placeholder="Add any radiologist notes or scan context..."
+                      placeholder="Add scan date, imaging type, or specific notes..."
                     />
                   </div>
 
                   <Button type="submit" size="lg" className="w-full" disabled={uploading || !selectedFile}>
                     {uploading ? (
                       <>
-                        <Loader2 className="mr-2 size-4 animate-spin" /> Uploading to Encrypted Bucket...
+                        <Loader2 className="mr-2 size-4 animate-spin" /> Uploading Scan...
                       </>
                     ) : (
                       <>
-                        <Lock className="mr-2 size-4" /> Upload Protected Image
+                        <Lock className="mr-2 size-4" /> Submit for Clinician Review
                       </>
                     )}
                   </Button>
@@ -283,85 +296,124 @@ function ImageAnalysisPage() {
               </CardContent>
             </Card>
 
-            {/* Library / Gallery */}
+            {/* Uploaded Scans & Review Status */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Your Protected Medical Images</CardTitle>
+                <CardTitle className="text-lg">Your Medical Image Scans</CardTitle>
                 <CardDescription>
-                  Only you have access to read or generate signed URLs for these files.
+                  Track clinician review status and view clinical findings notes.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 {loadingList ? (
-                  <div className="flex py-8 justify-center">
-                    <Loader2 className="size-6 animate-spin text-primary" />
+                  <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    {[1, 2, 3].map((i) => (
+                      <Card key={i} className="p-4 space-y-3">
+                        <Skeleton className="h-36 w-full rounded-md" />
+                        <Skeleton className="h-4 w-3/4" />
+                        <Skeleton className="h-4 w-1/2" />
+                      </Card>
+                    ))}
                   </div>
                 ) : images.length === 0 ? (
                   <p className="py-8 text-center text-sm text-muted-foreground">
-                    No medical images uploaded yet. Upload a scan above to start.
+                    No medical scans uploaded yet. Submit a scan above for clinician review.
                   </p>
                 ) : (
                   <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                    {images.map((img) => (
-                      <Card key={img.id} className="overflow-hidden border border-border shadow-sm">
-                        <div className="relative aspect-video bg-muted flex items-center justify-center overflow-hidden">
-                          {img.signedUrl ? (
-                            <img
-                              src={img.signedUrl}
-                              alt={img.file_name}
-                              className="object-cover w-full h-full"
-                              onError={(e) => {
-                                // Fallback icon for non-image / DICOM files
-                                (e.target as HTMLElement).style.display = "none";
-                              }}
-                            />
-                          ) : (
-                            <FileText className="size-12 text-muted-foreground" />
-                          )}
-                        </div>
-                        <CardContent className="p-4 space-y-3">
+                    {images.map((img) => {
+                      const isPending = img.status === "uploaded" || img.status === "pending";
+                      const isFlagged = img.status === "flagged";
+                      const isCompleted = img.status === "completed";
+
+                      return (
+                        <Card key={img.id} className="overflow-hidden border border-border shadow-sm flex flex-col justify-between">
                           <div>
-                            <h4 className="font-semibold text-sm truncate" title={img.file_name}>
-                              {img.file_name}
-                            </h4>
-                            <p className="text-xs text-muted-foreground">
-                              {formatFileSize(img.file_size)} · {new Date(img.created_at).toLocaleDateString()}
-                            </p>
-                          </div>
-
-                          {img.analysis_notes && (
-                            <p className="text-xs italic text-muted-foreground line-clamp-2">
-                              "{img.analysis_notes}"
-                            </p>
-                          )}
-
-                          <div className="flex items-center justify-between pt-2 border-t border-border">
-                            <Badge variant="outline" className="text-[10px] gap-1">
-                              <ShieldCheck className="size-3 text-emerald-500" /> {img.status}
-                            </Badge>
-
-                            <div className="flex items-center gap-1">
-                              {img.signedUrl && (
-                                <Button asChild variant="ghost" size="icon" title="View Full Image">
-                                  <a href={img.signedUrl} target="_blank" rel="noreferrer">
-                                    <Eye className="size-4" />
-                                  </a>
-                                </Button>
+                            <div className="relative aspect-video bg-slate-950 flex items-center justify-center overflow-hidden">
+                              {img.signedUrl ? (
+                                <img
+                                  src={img.signedUrl}
+                                  alt={img.file_name}
+                                  className="object-cover w-full h-full"
+                                  onError={(e) => {
+                                    (e.target as HTMLElement).style.display = "none";
+                                  }}
+                                />
+                              ) : (
+                                <FileText className="size-12 text-muted-foreground" />
                               )}
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="text-destructive hover:text-destructive"
-                                title="Delete Image"
-                                onClick={() => handleDelete(img)}
-                              >
-                                <Trash2 className="size-4" />
-                              </Button>
                             </div>
+
+                            <CardContent className="p-4 space-y-3">
+                              <div>
+                                <h4 className="font-semibold text-sm truncate" title={img.file_name}>
+                                  {img.file_name}
+                                </h4>
+                                <p className="text-xs text-muted-foreground">
+                                  {formatFileSize(img.file_size)} · {new Date(img.created_at).toLocaleDateString()}
+                                </p>
+                              </div>
+
+                              {/* Status Badge & Clinical Note */}
+                              <div className="space-y-2 pt-2 border-t border-border">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-xs font-medium text-muted-foreground">Status</span>
+                                  {isPending && (
+                                    <Badge variant="outline" className="gap-1 text-[10px] text-amber-600 border-amber-500/40 bg-amber-500/10">
+                                      <Clock className="size-3" /> Awaiting clinician review
+                                    </Badge>
+                                  )}
+                                  {isCompleted && (
+                                    <Badge variant="default" className="gap-1 text-[10px] bg-emerald-600">
+                                      <CheckCircle2 className="size-3" /> Reviewed by Clinician
+                                    </Badge>
+                                  )}
+                                  {isFlagged && (
+                                    <Badge variant="destructive" className="gap-1 text-[10px]">
+                                      <AlertTriangle className="size-3" /> Flagged for Follow-up
+                                    </Badge>
+                                  )}
+                                </div>
+
+                                {img.analysis_result ? (
+                                  <div className="rounded-md bg-muted/60 p-2.5 text-xs space-y-1">
+                                    <p className="font-semibold text-foreground">Clinician Review Note:</p>
+                                    <p className="text-muted-foreground leading-relaxed">{img.analysis_result}</p>
+                                    {img.reviewed_at && (
+                                      <p className="text-[10px] text-muted-foreground font-mono pt-1">
+                                        Reviewed: {new Date(img.reviewed_at).toLocaleDateString()}
+                                      </p>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <p className="text-xs text-muted-foreground italic">
+                                    Pending manual review by research clinician.
+                                  </p>
+                                )}
+                              </div>
+                            </CardContent>
                           </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+
+                          <div className="p-4 pt-0 flex items-center justify-between border-t border-border mt-3">
+                            {img.signedUrl && (
+                              <Button asChild variant="ghost" size="sm" className="text-xs">
+                                <a href={img.signedUrl} target="_blank" rel="noreferrer">
+                                  <Eye className="mr-1.5 size-3.5" /> View Scan
+                                </a>
+                              </Button>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-xs text-destructive hover:text-destructive"
+                              onClick={() => handleDelete(img)}
+                            >
+                              <Trash2 className="mr-1.5 size-3.5" /> Delete
+                            </Button>
+                          </div>
+                        </Card>
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>

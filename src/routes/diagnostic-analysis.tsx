@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import {
   Activity,
@@ -20,7 +21,7 @@ import {
   AlertTriangle,
   Loader2,
   Sparkles,
-  Info,
+  HelpCircle,
 } from "lucide-react";
 import {
   BarChart,
@@ -32,6 +33,8 @@ import {
   Cell,
 } from "recharts";
 
+import modelsMetadata from "../../supabase/functions/diagnostic-predict/artifacts/models_metadata.json";
+
 export const Route = createFileRoute("/diagnostic-analysis")({
   head: () => ({
     meta: [
@@ -42,7 +45,7 @@ export const Route = createFileRoute("/diagnostic-analysis")({
   component: DiagnosticAnalysisPage,
 });
 
-// Benchmark sample datasets for quick demo / research testing
+// Preset benchmark test values
 const SAMPLE_BENIGN = {
   radius_mean: 13.54,
   texture_mean: 14.36,
@@ -110,25 +113,26 @@ const SAMPLE_MALIGNANT = {
 };
 
 type PredictionResult = {
-  is_placeholder_heuristic: boolean;
-  note: string;
+  is_real_trained_inference: boolean;
   timestamp: string;
   overall_risk_assessment: "Malignant" | "Benign";
   average_probability: number;
   models: {
+    id: string;
     model: string;
     prediction: "Malignant" | "Benign";
     probability: number;
-    status: string;
-    decision_boundary: string;
-  }[];
-  feature_contributions: {
-    feature: string;
-    label: string;
-    value: number;
-    zScore: number;
-    contribution: number;
-    impact: string;
+    accuracy: number;
+    f1_score: number;
+    attribution_type: string;
+    feature_contributions: {
+      feature: string;
+      label: string;
+      raw_value: number;
+      scaled_value: number;
+      contribution: number;
+      impact: string;
+    }[];
   }[];
 };
 
@@ -191,7 +195,7 @@ function DiagnosticAnalysisPage() {
         },
       });
 
-      toast.success("Diagnostic ML analysis completed!");
+      toast.success("Real trained diagnostic inference completed!");
     } catch (err: any) {
       toast.error(err.message || "An error occurred during diagnostic analysis.");
     } finally {
@@ -211,15 +215,15 @@ function DiagnosticAnalysisPage() {
                 <div className="flex items-center gap-2">
                   <BrainCircuit className="size-6 text-primary" />
                   <h1 className="font-display text-2xl font-bold md:text-3xl">
-                    Structured Diagnostic Analysis
+                    Structured Diagnostic ML Analysis
                   </h1>
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Evaluation across 4 ML models (Logistic Regression, SVM, Random Forest, KNN) using UCI Breast Cancer Wisconsin features.
+                  Inference across 4 real trained scikit-learn models using UCI Breast Cancer Wisconsin features.
                 </p>
               </div>
 
-              {/* Sample Preset Loaders */}
+              {/* Sample Presets */}
               <div className="flex flex-wrap items-center gap-2">
                 <Button variant="outline" size="sm" onClick={() => loadPreset(SAMPLE_BENIGN)}>
                   <Sparkles className="mr-1.5 size-3.5 text-emerald-500" /> Use Sample Benign Case
@@ -230,20 +234,37 @@ function DiagnosticAnalysisPage() {
               </div>
             </div>
 
-            {/* Form & Input Card */}
+            {/* Model Benchmark Accuracy Cards */}
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {Object.entries(modelsMetadata).map(([key, meta]: [string, any]) => (
+                <Card key={key} className="p-3 bg-muted/30 border-border">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold">{meta.name}</span>
+                    <Badge variant="outline" className="text-[10px] bg-background">
+                      Test Acc: {(meta.accuracy * 100).toFixed(1)}%
+                    </Badge>
+                  </div>
+                  <p className="mt-1 text-[11px] text-muted-foreground">
+                    Macro F1: {meta.f1_score || meta.f1}
+                  </p>
+                </Card>
+              ))}
+            </div>
+
+            {/* 30 Features Input Form */}
             <Card className="shadow-[var(--shadow-card)]">
               <CardHeader>
-                <CardTitle className="text-lg">UCI Wisconsin (Diagnostic) 30 Feature Inputs</CardTitle>
+                <CardTitle className="text-lg">UCI Wisconsin 30 Feature Measurements</CardTitle>
                 <CardDescription>
-                  Enter cell nucleus measurements derived from digitized fine needle aspirate (FNA) images.
+                  Exact ordered features corresponding to standard scikit-learn load_breast_cancer dataset.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleRunAnalysis} className="space-y-6">
-                  {/* Mean features section */}
+                  {/* Mean features */}
                   <div className="space-y-3">
-                    <h3 className="text-sm font-semibold text-foreground border-b border-border pb-1">
-                      1. Mean Measurements (Primary Nucleus Characteristics)
+                    <h3 className="text-xs font-semibold text-foreground border-b border-border pb-1">
+                      1. Mean Measurements
                     </h3>
                     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
                       {[
@@ -273,10 +294,43 @@ function DiagnosticAnalysisPage() {
                     </div>
                   </div>
 
-                  {/* Worst features section */}
+                  {/* Standard Error features */}
                   <div className="space-y-3">
-                    <h3 className="text-sm font-semibold text-foreground border-b border-border pb-1">
-                      2. Worst Measurements (Largest / Most Extreme Values)
+                    <h3 className="text-xs font-semibold text-foreground border-b border-border pb-1">
+                      2. Standard Error (SE) Measurements
+                    </h3>
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                      {[
+                        { key: "radius_se", label: "Radius SE" },
+                        { key: "texture_se", label: "Texture SE" },
+                        { key: "perimeter_se", label: "Perimeter SE" },
+                        { key: "area_se", label: "Area SE" },
+                        { key: "smoothness_se", label: "Smoothness SE" },
+                        { key: "compactness_se", label: "Compactness SE" },
+                        { key: "concavity_se", label: "Concavity SE" },
+                        { key: "concave_points_se", label: "Concave Points SE" },
+                        { key: "symmetry_se", label: "Symmetry SE" },
+                        { key: "fractal_dimension_se", label: "Fractal Dim. SE" },
+                      ].map(({ key, label }) => (
+                        <div key={key} className="space-y-1">
+                          <Label htmlFor={key} className="text-xs">{label}</Label>
+                          <Input
+                            id={key}
+                            type="number"
+                            step="any"
+                            value={formData[key] ?? ""}
+                            onChange={(e) => handleInputChange(key, e.target.value)}
+                            className="h-8 text-xs font-mono"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Worst features */}
+                  <div className="space-y-3">
+                    <h3 className="text-xs font-semibold text-foreground border-b border-border pb-1">
+                      3. Worst Measurements
                     </h3>
                     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
                       {[
@@ -309,11 +363,11 @@ function DiagnosticAnalysisPage() {
                   <Button type="submit" size="lg" className="w-full" disabled={loading}>
                     {loading ? (
                       <>
-                        <Loader2 className="mr-2 size-4 animate-spin" /> Running Multi-Model Inference...
+                        <Loader2 className="mr-2 size-4 animate-spin" /> Executing TS Model Inference...
                       </>
                     ) : (
                       <>
-                        <Activity className="mr-2 size-4" /> Run Diagnostic Prediction (4 Models)
+                        <Activity className="mr-2 size-4" /> Run Real Trained ML Diagnostic Inference
                       </>
                     )}
                   </Button>
@@ -321,11 +375,30 @@ function DiagnosticAnalysisPage() {
               </CardContent>
             </Card>
 
-            {/* Results Section */}
-            {result && (
+            {/* Skeleton Loader during inference */}
+            {loading && (
+              <div className="space-y-4">
+                <Skeleton className="h-20 w-full rounded-xl" />
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  {[1, 2, 3, 4].map((i) => (
+                    <Skeleton key={i} className="h-32 w-full rounded-lg" />
+                  ))}
+                </div>
+                <Skeleton className="h-64 w-full rounded-xl" />
+              </div>
+            )}
+
+            {/* Inference Results View */}
+            {result && !loading && (
               <div className="space-y-6">
-                {/* Overall Banner */}
-                <Card className={`border-2 ${result.overall_risk_assessment === "Malignant" ? "border-rose-500/50 bg-rose-500/10" : "border-emerald-500/50 bg-emerald-500/10"}`}>
+                {/* Consensus Banner */}
+                <Card
+                  className={`border-2 ${
+                    result.overall_risk_assessment === "Malignant"
+                      ? "border-rose-500/50 bg-rose-500/10"
+                      : "border-emerald-500/50 bg-emerald-500/10"
+                  }`}
+                >
                   <CardContent className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
                     <div className="flex items-center gap-4">
                       {result.overall_risk_assessment === "Malignant" ? (
@@ -336,29 +409,40 @@ function DiagnosticAnalysisPage() {
                       <div>
                         <div className="flex items-center gap-2">
                           <h2 className="text-xl font-bold">
-                            Overall Consensus: {result.overall_risk_assessment}
+                            Overall ML Consensus: {result.overall_risk_assessment}
                           </h2>
-                          <Badge variant={result.overall_risk_assessment === "Malignant" ? "destructive" : "outline"}>
+                          <Badge
+                            variant={
+                              result.overall_risk_assessment === "Malignant" ? "destructive" : "outline"
+                            }
+                          >
                             Avg Probability: {(result.average_probability * 100).toFixed(1)}%
                           </Badge>
                         </div>
                         <p className="mt-1 text-xs text-muted-foreground">
-                          {result.note}
+                          Evaluated natively in Deno Edge Function using trained scikit-learn model parameters.
                         </p>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
 
-                {/* 4 Models Grid */}
+                {/* 4 Models Cards */}
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                   {result.models.map((m) => (
-                    <Card key={m.model} className="shadow-sm">
+                    <Card key={m.id} className="shadow-sm flex flex-col justify-between">
                       <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-semibold">{m.model}</CardTitle>
-                        <CardDescription className="text-[11px] font-mono">{m.decision_boundary}</CardDescription>
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-sm font-semibold">{m.model}</CardTitle>
+                          <Badge variant="outline" className="text-[10px]">
+                            Acc: {(m.accuracy * 100).toFixed(1)}%
+                          </Badge>
+                        </div>
+                        <CardDescription className="text-[11px]">
+                          F1 Score: {m.f1_score}
+                        </CardDescription>
                       </CardHeader>
-                      <CardContent className="space-y-2">
+                      <CardContent className="space-y-3">
                         <div className="flex items-center justify-between">
                           <span className="text-xs text-muted-foreground">Prediction</span>
                           <Badge variant={m.prediction === "Malignant" ? "destructive" : "secondary"}>
@@ -379,25 +463,31 @@ function DiagnosticAnalysisPage() {
                             />
                           </div>
                         </div>
+                        <p className="text-[10px] text-muted-foreground pt-1 border-t border-border">
+                          Attribution: {m.attribution_type === "exact_model_coefficient" ? "Exact Linear Coef" : "Dataset Variance Approx"}
+                        </p>
                       </CardContent>
                     </Card>
                   ))}
                 </div>
 
-                {/* Feature Contributions Chart */}
+                {/* Feature Attribution Chart */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
-                      <BarChart3 className="size-5 text-primary" /> Feature Contribution Analysis (Top 10 Drivers)
+                      <BarChart3 className="size-5 text-primary" /> Genuine Model Feature Explainability (Logistic Regression)
                     </CardTitle>
                     <CardDescription>
-                      Relative importance score derived from standardized deviation from UCI research means.
+                      Exact per-feature contributions calculated as coefficient multiplied by standardized feature value.
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="h-72 w-full">
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={result.feature_contributions} margin={{ top: 10, right: 30, left: 40, bottom: 20 }}>
+                        <BarChart
+                          data={result.models[0]?.feature_contributions || []}
+                          margin={{ top: 10, right: 30, left: 40, bottom: 25 }}
+                        >
                           <XAxis dataKey="label" tick={{ fontSize: 11 }} interval={0} angle={-25} textAnchor="end" />
                           <YAxis tick={{ fontSize: 11 }} />
                           <Tooltip
@@ -407,9 +497,10 @@ function DiagnosticAnalysisPage() {
                                 return (
                                   <div className="rounded-lg border border-border bg-popover p-3 text-xs shadow-md">
                                     <p className="font-semibold text-popover-foreground">{data.label}</p>
-                                    <p className="text-muted-foreground">Value: {data.value}</p>
-                                    <p className="text-muted-foreground">Z-Score: {data.zScore}</p>
-                                    <p className="font-medium text-primary">Contribution: {data.contribution}</p>
+                                    <p className="text-muted-foreground">Raw Value: {data.raw_value}</p>
+                                    <p className="text-muted-foreground">Scaled Z-Score: {data.scaled_value}</p>
+                                    <p className="font-medium text-primary">Log-Odds Contribution: {data.contribution}</p>
+                                    <p className="text-[10px] italic text-muted-foreground mt-1">{data.impact}</p>
                                   </div>
                                 );
                               }
@@ -417,10 +508,10 @@ function DiagnosticAnalysisPage() {
                             }}
                           />
                           <Bar dataKey="contribution" radius={[4, 4, 0, 0]}>
-                            {result.feature_contributions.map((entry, index) => (
+                            {(result.models[0]?.feature_contributions || []).map((entry, index) => (
                               <Cell
                                 key={`cell-${index}`}
-                                fill={entry.zScore > 1.0 ? "#e11d48" : "#2563eb"}
+                                fill={entry.contribution > 0 ? "#e11d48" : "#2563eb"}
                               />
                             ))}
                           </Bar>

@@ -1,0 +1,26 @@
+{
+  "logistic_regression": {
+    "name": "Logistic Regression",
+    "accuracy": 0.9649,
+    "f1_score": 0.9619,
+    "description": "Linear probabilistic classifier with exact log-odds feature attribution"
+  },
+  "svm_linear": {
+    "name": "Support Vector Machine (Linear)",
+    "accuracy": 0.9649,
+    "f1_score": 0.9615,
+    "description": "Maximum-margin hyperplane with linear margin attributions"
+  },
+  "random_forest": {
+    "name": "Random Forest",
+    "accuracy": 0.9737,
+    "f1_score": 0.9713,
+    "description": "Ensemble of 50 decision trees (max depth 6) with tree-traversal voting"
+  },
+  "knn": {
+    "name": "K-Nearest Neighbors",
+    "accuracy": 0.9561,
+    "f1_score": 0.9521,
+    "description": "Distance-based instance classifier (k=5) over standardized feature space"
+  }
+}
